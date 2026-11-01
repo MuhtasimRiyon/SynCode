@@ -1,0 +1,5 @@
+@extends('layouts.app')
+@section('title', 'Find your people')
+@section('content')
+<section class="auth-panel panel"><span class="brand-icon"><x-icon name="code" size="28"/></span><span class="page-eyebrow">THERE’S ROOM FOR YOUR IDEAS</span><h1>Start your next chapter<span class="accent">.</span></h1><p>Learn out loud. Build together. Find your people.</p><form data-auth><label>Your name<input required maxlength="80" autocomplete="name" placeholder="What should we call you?"></label><label>Email address<input type="email" required autocomplete="email" placeholder="you@example.com"></label><label>Password<input type="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters"></label><label class="checkbox-label"><input type="checkbox" required>I agree to keep this community respectful.</label><button class="button full">Create account</button><p class="field-help">UI preview. No account is created or credentials stored.</p></form><p>Already part of the community? <a class="accent" href="{{ route('login') }}">Sign in →</a></p></section>
+@endsection

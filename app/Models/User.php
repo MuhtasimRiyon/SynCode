@@ -10,6 +10,20 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    public function roleLabel(): string
+    {
+        return match ($this->role) {
+            'super_admin' => 'Super Admin',
+            'moderator' => 'Moderator',
+            default => 'Author',
+        };
+    }
+
+    public function homeRoute(): string
+    {
+        return in_array($this->role, ['super_admin', 'moderator']) ? 'admin' : 'dashboard';
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 

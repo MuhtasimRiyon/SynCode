@@ -19,7 +19,7 @@ class ExampleTest extends TestCase
     public function test_community_feed_has_its_own_route(): void
     {
         $this->get('/feed')->assertOk()
-            ->assertSee('id="navigation"', false)
-            ->assertSee('My feed');
+            ->assertDontSee('id="navigation"', false)
+            ->assertSee('Learn something.');
     }
 }

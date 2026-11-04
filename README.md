@@ -1,3 +1,24 @@
+## SynCode local accounts
+
+The local XAMPP app uses the MySQL/MariaDB database `syncode` and database-backed sessions. Open phpMyAdmin to inspect its tables. The previous SQLite file is retained as a backup; existing user records were copied to MySQL.
+
+```sh
+php artisan migrate
+php artisan db:seed
+```
+
+On the login page, choose **Super Admin**, **Moderator**, or **Author** to fill the credentials, then click **Sign in**. All three demo accounts use `SynCode@123`:
+
+| Role | Email | Access |
+| --- | --- | --- |
+| Super Admin | admin@syncode.test | All admin sections |
+| Moderator | moderator@syncode.test | Content review and moderation |
+| Author | author@syncode.test | Personal dashboard and stories |
+
+Registration creates an Author account. Login returns to the requested article when present; otherwise it opens the role’s workspace. Logout ends the session.
+
+Demo seeding and credential buttons are enabled by default only in the local environment. Set `DEMO_ACCOUNTS_ENABLED=false` to disable them. Re-running the seeder updates the same three demo accounts without creating duplicates.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

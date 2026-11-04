@@ -2,6 +2,22 @@
     'use strict';
     const $ = (s, root = document) => root.querySelector(s);
     const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+    $$('[data-demo-login]').forEach(button => button.addEventListener('click', event => {
+        const form = $('#login-form');
+        if (!form) return;
+        event.preventDefault();
+        form.elements.namedItem('email').value = button.dataset.email;
+        form.elements.namedItem('password').value = button.dataset.password;
+        $$('[data-demo-login]').forEach(option => option.setAttribute('aria-pressed', option === button));
+        $('[data-demo-status]').textContent = `${button.textContent.trim()} credentials ready. Click Sign in.`;
+        $('button[type="submit"]', form).focus();
+    }));
+    const authenticated = document.body.dataset.authenticated === 'true';
+    function requireLogin() {
+        if (authenticated) return true;
+        window.location.assign(document.body.dataset.loginUrl);
+        return false;
+    }
     const storage = {
         get(key, fallback) { try { return JSON.parse(localStorage.getItem(`syncode:${key}`)) ?? fallback; } catch { return fallback; } },
         set(key, value) { try { localStorage.setItem(`syncode:${key}`, JSON.stringify(value)); return true; } catch { toast('Browser storage is unavailable. Changes will last for this visit.'); return false; } }
@@ -18,8 +34,9 @@
         }).join('');
     }
     $('[data-menu]')?.addEventListener('click', e => { const open = $('#navigation').classList.toggle('open'); e.currentTarget.setAttribute('aria-expanded', open); });
-    document.addEventListener('keydown', e => { if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { const input = $('.global-search input'); if (input && getComputedStyle(input.closest('form')).display !== 'none') { e.preventDefault(); input.focus(); } } if (e.key === 'Escape') { $('#navigation').classList.remove('open'); $('[data-menu]')?.setAttribute('aria-expanded', 'false'); } });
+    document.addEventListener('keydown', e => { if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { const input = $('.global-search input'); if (input && getComputedStyle(input.closest('form')).display !== 'none') { e.preventDefault(); input.focus(); } } if (e.key === 'Escape') { $('#navigation')?.classList.remove('open'); $('[data-menu]')?.setAttribute('aria-expanded', 'false'); } });
     let bookmarks = storage.get('bookmarks', []), likes = storage.get('likes', []), following = storage.get('following', []);
+    if (!authenticated) { bookmarks = []; likes = []; following = []; }
     const prefs = storage.get('preferences', {});
     const applyPrefs = () => { document.body.classList.toggle('comfortable', !!prefs.comfortable); document.body.classList.toggle('reduce-motion', !!prefs.reduceMotion); };
     applyPrefs();
@@ -29,9 +46,9 @@
         $$('[data-follow]').forEach(b => { const active = following.includes(b.dataset.follow); b.setAttribute('aria-pressed', active); if (b.classList.contains('follow-button')) { b.textContent = active ? '✓' : '+'; b.setAttribute('aria-label', `${active ? 'Unfollow' : 'Follow'} ${b.dataset.follow}`); } else b.textContent = active ? 'Following ✓' : 'Follow'; });
     }
     function toggle(list, value) { return list.includes(value) ? list.filter(x => x !== value) : [...list, value]; }
-    $$('[data-bookmark]').forEach(b => b.addEventListener('click', () => { bookmarks = toggle(bookmarks, b.dataset.bookmark); storage.set('bookmarks', bookmarks); syncButtons(); filterPosts(); toast(bookmarks.includes(b.dataset.bookmark) ? 'Story added to your reading corner.' : 'Story removed from bookmarks.'); }));
-    $$('[data-like]').forEach(b => b.addEventListener('click', () => { likes = toggle(likes, b.dataset.like); storage.set('likes', likes); syncButtons(); }));
-    $$('[data-follow]').forEach(b => b.addEventListener('click', () => { following = toggle(following, b.dataset.follow); storage.set('following', following); syncButtons(); filterPosts(); toast(following.includes(b.dataset.follow) ? `You’re following ${b.dataset.follow} in this preview.` : 'Author removed from your following feed.'); }));
+    $$('[data-bookmark]').forEach(b => b.addEventListener('click', () => { if (!requireLogin()) return; bookmarks = toggle(bookmarks, b.dataset.bookmark); storage.set('bookmarks', bookmarks); syncButtons(); filterPosts(); toast(bookmarks.includes(b.dataset.bookmark) ? 'Story added to your reading corner.' : 'Story removed from bookmarks.'); }));
+    $$('[data-like]').forEach(b => b.addEventListener('click', () => { if (!requireLogin()) return; likes = toggle(likes, b.dataset.like); storage.set('likes', likes); syncButtons(); }));
+    $$('[data-follow]').forEach(b => b.addEventListener('click', () => { if (!requireLogin()) return; following = toggle(following, b.dataset.follow); storage.set('following', following); syncButtons(); filterPosts(); toast(following.includes(b.dataset.follow) ? `You’re following ${b.dataset.follow} in this preview.` : 'Author removed from your following feed.'); }));
     syncButtons();
     let currentTopic = new URLSearchParams(location.search).get('topic') || '';
     let currentTab = 'all';
@@ -55,9 +72,11 @@
     $$('[data-story-status]').forEach(b => b.addEventListener('click', () => { $$('[data-story-status]').forEach(x => { x.classList.toggle('selected', x === b); x.setAttribute('aria-pressed', x === b); }); $$('[data-my-story]').forEach(row => row.hidden = !!b.dataset.storyStatus && row.dataset.myStory !== b.dataset.storyStatus); }));
     filterPosts();
     $('[data-newsletter]')?.addEventListener('submit', e => { e.preventDefault(); toast('Newsletter preview — email delivery will be connected in a later phase.'); });
-    $('[data-auth]')?.addEventListener('submit', e => { e.preventDefault(); toast('Authentication is a UI preview. No credentials have been sent or stored.'); });
     $('[data-share]')?.addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); toast('Story link copied.'); } catch { toast('Copy the story URL from your browser’s address bar.'); } });
-    $('[data-comment]')?.addEventListener('submit', e => { e.preventDefault(); const input = $('textarea', e.currentTarget); if (!input.value.trim()) return; const comment = document.createElement('div'); comment.className = 'comment'; const avatar = document.createElement('span'); avatar.className = 'avatar small green'; avatar.textContent = 'MR'; const body = document.createElement('div'); const name = document.createElement('strong'); name.textContent = 'You'; const time = document.createElement('small'); time.textContent = 'Just now · Preview comment'; const text = document.createElement('p'); text.textContent = input.value.trim(); body.append(name,time,text); comment.append(avatar,body); $('#comment-list').prepend(comment); input.value = ''; toast('Preview comment added. It will clear when you reload.'); });
+    $('[data-comment] textarea')?.addEventListener('click', () => { requireLogin(); });
+    $('[data-comment] textarea')?.addEventListener('beforeinput', e => { if (!requireLogin()) e.preventDefault(); });
+    $('[data-comment] button[type="submit"]')?.addEventListener('click', e => { if (!requireLogin()) e.preventDefault(); });
+    $('[data-comment]')?.addEventListener('submit', e => { e.preventDefault(); if (!requireLogin()) return; const input = $('textarea', e.currentTarget); if (!input.value.trim()) return; const comment = document.createElement('div'); comment.className = 'comment'; const avatar = document.createElement('span'); avatar.className = 'avatar small green'; avatar.textContent = document.body.dataset.userName?.slice(0, 1).toUpperCase() || 'U'; const body = document.createElement('div'); const name = document.createElement('strong'); name.textContent = document.body.dataset.userName || 'You'; const time = document.createElement('small'); time.textContent = 'Just now · Preview comment'; const text = document.createElement('p'); text.textContent = input.value.trim(); body.append(name,time,text); comment.append(avatar,body); $('#comment-list').prepend(comment); input.value = ''; toast('Preview comment added. It will clear when you reload.'); });
     $('#mark-read')?.addEventListener('click', e => { $$('.unread').forEach(x => x.classList.remove('unread')); storage.set('notificationsRead', true); e.currentTarget.textContent = 'All caught up'; toast('Sample notifications marked as read.'); });
     if (storage.get('notificationsRead', false)) { $$('.notification-row').forEach(x => x.classList.remove('unread')); if ($('#mark-read')) $('#mark-read').textContent = 'All caught up'; }
     const prefForm = $('#preferences-form');

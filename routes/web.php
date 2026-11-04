@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CommunityController;
 use Illuminate\Support\Facades\Route;
 
@@ -10,3 +11,6 @@ foreach (['explore', 'bookmarks', 'profile', 'notifications', 'settings', 'stori
     Route::get('/'.$screen, [CommunityController::class, 'screen'])->name($screen);
 }
 Route::get('/write', [CommunityController::class, 'screen'])->name('editor');
+Route::post('/login', [AuthController::class, 'login'])->middleware(['guest', 'throttle:6,1'])->name('login.store');
+Route::post('/register', [AuthController::class, 'register'])->middleware(['guest', 'throttle:6,1'])->name('register.store');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

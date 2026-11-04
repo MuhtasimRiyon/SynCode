@@ -4,10 +4,21 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Support\DemoContent;
+use Database\Seeders\CommunitySeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PublicReadingTest extends TestCase
 {
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['demo.enabled' => true, 'demo.content_enabled' => true]);
+        $this->seed(CommunitySeeder::class);
+    }
+
     public function test_guests_can_open_a_story_from_the_public_landing_page(): void
     {
         $post = DemoContent::posts()[0];
@@ -37,8 +48,7 @@ class PublicReadingTest extends TestCase
 
     public function test_authenticated_readers_are_recognized(): void
     {
-        $user = new User;
-        $user->id = 1;
+        $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get(route('article', DemoContent::posts()[0]['slug']))

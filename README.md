@@ -1,80 +1,83 @@
-## SynCode local accounts
+# SynCode
 
-The local XAMPP app uses the MySQL/MariaDB database `syncode` and database-backed sessions. Open phpMyAdmin to inspect its tables. The previous SQLite file is retained as a backup; existing user records were copied to MySQL.
+A Laravel 12 developer community backed by MySQL/MariaDB. The local XAMPP application is available at **http://localhost/SynCode/public**. Database: **syncode**. Sessions also use the database.
+
+## Setup
+
+Requires PHP 8.2+, Composer, MySQL/MariaDB, and the PDO MySQL extension. Start Apache and MySQL in XAMPP. For a fresh installation, create an empty `syncode` database in phpMyAdmin, then run:
 
 ```sh
+composer install
+cp .env.example .env  # Fresh installations only; keep an existing .env
+php artisan key:generate
 php artisan migrate
 php artisan db:seed
+php artisan storage:link
 ```
 
-On the login page, choose **Super Admin**, **Moderator**, or **Author** to fill the credentials, then click **Sign in**. All three demo accounts use `SynCode@123`:
+Set `APP_URL`, database credentials, and `DB_SOCKET` in `.env` for your machine. The current XAMPP socket is `/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock`. The working UI uses `public/css` and `public/js` directly and needs no Vite build.
 
-| Role | Email | Access |
-| --- | --- | --- |
-| Super Admin | admin@syncode.test | All admin sections |
-| Moderator | moderator@syncode.test | Content review and moderation |
-| Author | author@syncode.test | Personal dashboard and stories |
+## Features
 
-Registration creates an Author account. Login returns to the requested article when present; otherwise it opens the role’s workspace. Logout ends the session.
+- Public landing page, feed, category/tag search, latest and trending stories, and article reading.
+- Registration, remembered login, logout, safe return URLs, and role-based workspaces.
+- Account-owned drafts, story editing/deletion, Markdown preview/rendering, cover uploads, categories, tags, and series assignment.
+- Moderated publication and scheduling in `Asia/Dhaka` by default (`APP_TIMEZONE` can override it). Pending, draft, rejected and scheduled stories are private to their author and moderators.
+- Persistent likes, bookmarks, author follows, following feed, comments, comment deletion, reports, and activity notifications.
+- Profile updates, unique usernames, bio/location, and account-specific reading preferences.
+- Actual dashboard and community metrics, review/feature/reject/delete actions, report resolution, categories/tags, series creation, site branding/SEO, approval policy, and maintenance mode.
+- Super Admin user-role and suspension controls. Suspended users cannot log in or continue authenticated sessions; their stories leave the public feed. An administrator cannot remove their own access or the last active administrator.
+- Newsletter signup storage with duplicate protection. **Email campaigns and external social login are not configured.**
 
-Demo seeding and credential buttons are enabled by default only in the local environment. Set `DEMO_ACCOUNTS_ENABLED=false` to disable them. Re-running the seeder updates the same three demo accounts without creating duplicates.
+Scheduled stories requiring moderation remain pending until approved. Approved stories publish on the first application request at or after their publication time. To publish without waiting for traffic, run Laravel’s scheduler:
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+```sh
+php artisan schedule:work
+```
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+On a server, invoke `php artisan schedule:run` every minute through the system scheduler. `php artisan stories:publish` also processes due stories manually.
 
-## About Laravel
+## Administrator and clean data
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Sample stories have been removed from the working local database. Debug output is disabled. Three local test accounts are available through the login page’s Super Admin, Moderator and Author credential buttons; select a role, then click Sign in. Their emails are `admin@syncode.test`, `moderator@syncode.test`, and `author@syncode.test`; all use `SynCode@123`. These accounts are for local feature testing only. A private SQL backup was saved before cleanup under `storage/app/private/backups/`. No real administrator identity or password is invented.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Create your own administrator from the project terminal:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```sh
+php artisan syncode:admin
+```
 
-## Learning Laravel
+This asks for your name, email and a hidden password with confirmation (at least 12 characters, mixed case, a number and a symbol). It creates a Super Admin without changing existing users. Ordinary registration always creates an Author.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+With demo flags disabled, normal seeding creates only default categories. `DEMO_ACCOUNTS_ENABLED=true` enables local test accounts and their credential buttons. Sample stories additionally require `DEMO_CONTENT_ENABLED=true`; enabling login buttons alone does not recreate blogs. Production always refuses demo seeding. The opt-in development accounts are defined in `app/Support/DemoAccounts.php`. Never enable them on a public server.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```sh
+php artisan syncode:demo-clean           # Preview known sample data
+php artisan syncode:demo-clean --apply   # Back up MySQL before cleanup
+php artisan syncode:backup              # Private SQL backup
+```
 
-## Laravel Sponsors
+Cleanup preserves edited sample stories and unrelated users. Accounts with remaining contributions are preserved; known demo logins with remaining contributions are disabled.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Server deployment
 
-### Premium Partners
+The repository is prepared locally; it has not been deployed to a remote server. Use [the deployment guide](deploy/README.md), `.env.production.example`, and the Nginx/PHP templates in `deploy/`. Keep the local `.env` for local development. Production requires the real domain, HTTPS, a database user/password and a real administrator.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Database handling
 
-## Contributing
+Migrations add community tables without replacing existing users or sessions. Inspect them through phpMyAdmin:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- `users`, `posts`, `comments`, `likes`, `bookmarks`, `follows`
+- `community_notifications`, `reports`, `taxonomies`, `series`
+- `site_settings`, `newsletter_subscriptions`
 
-## Code of Conduct
+Foreign keys clean up post interactions when a story is deleted. Composite unique indexes prevent duplicate likes, bookmarks and follows. Transactions protect updates and concurrent reaction changes. Cover files live in `storage/app/public/covers`, are exposed through `public/storage`, and are removed when replaced or when their story is deleted. Upload validation accepts JPG, PNG, WebP and GIF up to 8 MB. Markdown strips raw HTML and unsafe links.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Verification
 
-## Security Vulnerabilities
+```sh
+php artisan test
+node --check public/js/community.js
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Tests use an isolated in-memory SQLite database and cover authentication, permissions, author ownership, publication/scheduling, interaction persistence and counts, reports, notifications, settings, suspension, maintenance, uploads, series filtering, and session-deduplicated reads. They do not reset the local MySQL database.

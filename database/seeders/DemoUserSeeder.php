@@ -10,7 +10,7 @@ class DemoUserSeeder extends Seeder
 {
     public function run(): void
     {
-        if (! config('demo.enabled')) {
+        if (app()->isProduction() || ! config('demo.enabled')) {
             return;
         }
 

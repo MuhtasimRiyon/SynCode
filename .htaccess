@@ -1,0 +1,7 @@
+# Local XAMPP safeguard: expose only public/, never the project source or .env.
+# Production web servers must use public/ as their document root.
+Options -Indexes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule !^public(?:/|$) - [F,L]
+</IfModule>

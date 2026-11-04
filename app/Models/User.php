@@ -10,6 +10,21 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    public function following()
+    {
+        return $this->belongsToMany(self::class, 'follows', 'user_id', 'author_id')->withTimestamps();
+    }
+
+    public function followers()
+    {
+        return $this->belongsToMany(self::class, 'follows', 'author_id', 'user_id')->withTimestamps();
+    }
+
     public function roleLabel(): string
     {
         return match ($this->role) {
@@ -58,6 +73,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preferences' => 'array',
+            'suspended' => 'boolean',
         ];
     }
 }

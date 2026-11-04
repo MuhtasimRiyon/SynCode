@@ -16,7 +16,7 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt($credentials + ['suspended' => false], $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => 'The email address or password is incorrect.',
             ]);

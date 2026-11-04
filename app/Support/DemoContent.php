@@ -4,6 +4,11 @@ namespace App\Support;
 
 class DemoContent
 {
+    public static function body(array $data): string
+    {
+        return "## Start with the problem\n\n".$data['excerpt']."\n\n## A small, focused approach\n\nBreak the work into small pieces. Measure the result, record what changed, and share the reasoning behind your choices.\n\n## What I’m taking forward\n\nProgress comes from small improvements. What has worked for you?";
+    }
+
     public static function posts(): array
     {
         return [

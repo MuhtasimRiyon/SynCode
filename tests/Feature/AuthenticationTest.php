@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Support\DemoContent;
+use Database\Seeders\CommunitySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -14,6 +15,8 @@ class AuthenticationTest extends TestCase
 
     public function test_login_returns_to_the_article_with_workspace_navigation(): void
     {
+        config(['demo.enabled' => true, 'demo.content_enabled' => true]);
+        $this->seed(CommunitySeeder::class);
         $user = User::factory()->create(['password' => 'a-valid-password']);
         $article = route('article', DemoContent::posts()[0]['slug']);
 
@@ -91,6 +94,8 @@ class AuthenticationTest extends TestCase
 
     public function test_logout_hides_the_workspace_again(): void
     {
+        config(['demo.enabled' => true, 'demo.content_enabled' => true]);
+        $this->seed(CommunitySeeder::class);
         $this->actingAs(User::factory()->create())->post(route('logout'))
             ->assertRedirect(route('home'));
 
